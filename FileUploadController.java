@@ -1,38 +1,32 @@
 package com.example.demo.controller;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response;
-import org.apache.cxf.jaxrs.ext.multipart.Attachment;
-import org.apache.cxf.jaxrs.ext.multipart.MultipartBody;
-import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Controller
-@Path("/upload")
+@RestController
 public class FileUploadController {
 
-    @GET
-    @Path("/file")
-    public Response uploadFile(MultipartBody multipartBody) {
-        Attachment attachment = multipartBody.getRootAttachment();
-        if (attachment == null) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("File is empty").build();
+    @GetMapping("/upload")
+    public String uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return "File is empty";
         }
 
         try {
-            byte[] bytes = attachment.getObject(byte[].class);
-            Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/" + attachment.getContentDisposition().getParameter("filename"));
+            byte[] bytes = file.getBytes();
+            Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/" + file.getOriginalFilename());
             Files.write(path, bytes);
-            return Response.ok("File uploaded successfully: " + attachment.getContentDisposition().getParameter("filename")).type(MediaType.TEXT_PLAIN).build();
+            return "File uploaded successfully: " + file.getOriginalFilename();
         } catch (IOException e) {
             e.printStackTrace();
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("File upload failed").build();
+            return "File upload failed";
         }
     }
 }
